@@ -1,0 +1,70 @@
+version: "3.7"
+
+services:
+  traefik:
+    image: traefik:latest
+    environment:
+      - GODADDY_API_KEY_FILE=/run/secrets/go-daddy_api_key
+      - GODADDY_API_SECRET_FILE=/run/secrets/go-daddy_api_secret
+    secrets:
+      - go-daddy_api_secret
+      - go-daddy_api_key
+    command: 
+      - "--api.insecure=true"
+      - "--providers.docker.swarmMode=true"
+      - "--providers.docker.exposedByDefault=false"
+      - "--providers.docker.watch"
+      - "--log.level=DEBUG"
+
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      - "--entrypoints.web.http.redirections.entryPoint.to=websecure"
+      - "--entrypoints.web.http.redirections.entryPoint.scheme=https"
+
+      - "--certificatesresolvers.letsencrypt.acme.dnschallenge=true"
+      - "--certificatesresolvers.letsencrypt.acme.dnschallenge.provider=godaddy"
+      - "--certificatesresolvers.letsencrypt.acme.dnschallenge.delaybeforecheck=1"
+      - "--certificatesresolvers.letsencrypt.acme.email=vncluposeli@gmail.com"
+      - "--certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json"
+      
+      - "--entrypoints.websecure.http.tls=true"
+      - "--entrypoints.websecure.http.tls.certResolver=letsencrypt"
+#      - "--entrypoints.websecure.http.tls.domains[0].main=cluster-01.exablack.com"
+#      - "--entrypoints.websecure.http.tls.domains[0].sans=*.cluster-01.exablack.com"
+      
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - certificados-traefik:/letsencrypt/
+    networks:
+      - traefik
+      - hello-world
+    deploy:
+      placement:
+        constraints: [node.role==manager]
+      restart_policy:
+        condition: always
+
+secrets:
+  go-daddy_api_key:
+    file: go-daddy_api_key.txt
+  go-daddy_api_secret:
+    file: go-daddy_api_secret.txt
+
+volumes:
+  certificados-traefik:
+    driver: local
+    driver_opts:
+      type: nfs
+      o: nfsvers=4,addr=10.20.30.100,rw
+      device: ":/data/dados-app/certificados-traefik"
+
+networks:
+  traefik:
+    driver: overlay
+    external: true
+  hello-world:
+    driver: overlay
+    external: true
