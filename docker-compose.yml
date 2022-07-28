@@ -14,7 +14,6 @@ services:
       - "--providers.docker.swarmMode=true"
       - "--providers.docker.exposedByDefault=false"
       - "--providers.docker.watch"
-      - "--log.level=DEBUG"
 
       - "--entrypoints.web.address=:80"
       - "--entrypoints.websecure.address=:443"
@@ -29,6 +28,7 @@ services:
       
       - "--entrypoints.websecure.http.tls=true"
       - "--entrypoints.websecure.http.tls.certResolver=letsencrypt"
+#      Para utilizar dominio coringa descomente essas duas linhas para gerar o certificado.      
 #      - "--entrypoints.websecure.http.tls.domains[0].main=cluster-01.exablack.com"
 #      - "--entrypoints.websecure.http.tls.domains[0].sans=*.cluster-01.exablack.com"
       
